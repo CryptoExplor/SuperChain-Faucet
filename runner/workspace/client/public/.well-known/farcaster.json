@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "token": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "vNext",
+    "name": "Base Sepolia Faucet",
+    "iconUrl": "https://your-domain.replit.app/icon.png",
+    "splashImageUrl": "https://your-domain.replit.app/splash.png",
+    "homeUrl": "https://your-domain.replit.app/frame",
+    "webhookUrl": null,
+    "description": "Claim test ETH on Base Sepolia with Gitcoin Passport verification",
+    "theme": {
+      "backgroundColor": "#f8fafc"
+    }
+  }
+}

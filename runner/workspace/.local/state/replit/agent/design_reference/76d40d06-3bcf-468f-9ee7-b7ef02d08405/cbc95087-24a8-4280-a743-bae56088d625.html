@@ -1,0 +1,557 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Sepolia Faucet - Get Test ETH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 2s linear infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-faucet text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Base Sepolia Faucet</h1>
+                        <p class="text-sm text-gray-600">Get test ETH for development</p>
+                    </div>
+                </div>
+                <!-- Network Status -->
+                <div class="hidden sm:flex items-center space-x-2 bg-emerald-50 px-3 py-2 rounded-lg">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span class="text-sm font-medium text-emerald-700">Base Sepolia</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- @COMPONENT: WalletConnection -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-wallet text-blue-500 mr-2"></i>
+                    Wallet Connection
+                </h2>
+                <div id="connectionStatus" class="hidden">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5"></div>
+                        Connected
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Wallet Connection Button -->
+            <div id="connectWalletSection">
+                <button id="connectWalletBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                    <i class="fab fa-ethereum text-lg"></i>
+                    <span>Connect MetaMask Wallet</span>
+                </button>
+                <p class="text-sm text-gray-500 mt-2 text-center">
+                    Connect your wallet to check eligibility and claim test ETH
+                </p>
+            </div>
+
+            <!-- Connected Wallet Info -->
+            <div id="walletInfo" class="hidden">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Wallet Address</span>
+                        <button id="copyAddressBtn" class="text-blue-500 hover:text-blue-600 text-sm">
+                            <i class="fas fa-copy mr-1"></i>Copy
+                        </button>
+                    </div>
+                    <p id="walletAddress" class="font-mono text-sm text-gray-900 break-all" data-bind="user.walletAddress">0x1234...5678</p>
+                    
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <span class="text-sm font-medium text-gray-700">Network</span>
+                        <p class="text-sm text-gray-900">Base Sepolia Testnet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: WalletConnection -->
+
+        <!-- @COMPONENT: GitcoinPassport -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-shield-alt text-emerald-500 mr-2"></i>
+                    Gitcoin Passport Score
+                </h2>
+                <button id="refreshScoreBtn" class="hidden text-blue-500 hover:text-blue-600 text-sm">
+                    <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </button>
+            </div>
+
+            <!-- Score Loading State -->
+            <div id="scoreLoading" class="hidden">
+                <div class="flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span class="ml-3 text-gray-600">Fetching Gitcoin Passport score...</span>
+                </div>
+            </div>
+
+            <!-- Score Display -->
+            <div id="scoreDisplay" class="hidden">
+                <div class="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-3xl font-bold text-gray-900" id="passportScore" data-bind="user.passportScore">15.2</span>
+                                <div id="scoreThresholdBadge" class="px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-medium rounded-full">
+                                    Eligible ✓
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Minimum required: <span class="font-medium">10.0</span>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-emerald-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Error State -->
+            <div id="scoreError" class="hidden">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        <div>
+                            <h3 class="text-red-800 font-medium">Unable to fetch Passport score</h3>
+                            <p class="text-red-600 text-sm mt-1" id="scoreErrorMessage">
+                                Please ensure you have a Gitcoin Passport with stamps
+                            </p>
+                        </div>
+                    </div>
+                    <button id="retryScoreBtn" class="mt-3 text-red-600 hover:text-red-700 text-sm font-medium">
+                        <i class="fas fa-redo mr-1"></i>Try Again
+                    </button>
+                </div>
+            </div>
+
+            <!-- Not Connected State -->
+            <div id="scoreNotConnected">
+                <div class="text-center py-8">
+                    <i class="fas fa-link text-gray-400 text-3xl mb-3"></i>
+                    <p class="text-gray-500">Connect your wallet to check Gitcoin Passport score</p>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: GitcoinPassport -->
+
+        <!-- @COMPONENT: FaucetClaim -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-coins text-amber-500 mr-2"></i>
+                    Claim Test ETH
+                </h2>
+                <div class="text-sm text-gray-500">
+                    0.001 ETH per claim
+                </div>
+            </div>
+
+            <!-- Claim Button Section -->
+            <div id="claimSection">
+                <!-- Disabled State (Default) -->
+                <div id="claimDisabled">
+                    <button disabled class="w-full bg-gray-300 text-gray-500 font-medium py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center space-x-2">
+                        <i class="fas fa-lock"></i>
+                        <span>Connect wallet and verify Passport score</span>
+                    </button>
+                    <p class="text-sm text-gray-500 mt-2 text-center">
+                        Requires Gitcoin Passport score ≥ 10 and wallet connection
+                    </p>
+                </div>
+
+                <!-- Eligible State -->
+                <div id="claimEligible" class="hidden">
+                    <button id="claimTokensBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                        <i class="fas fa-gift"></i>
+                        <span>Claim 0.001 ETH</span>
+                    </button>
+                    <div class="flex items-center justify-between mt-2 text-sm text-gray-500">
+                        <span>Next claim available in: <span id="nextClaimTime" class="font-medium">7 days</span></span>
+                        <span>Rate limit: 1 per week</span>
+                    </div>
+                </div>
+
+                <!-- Claiming State -->
+                <div id="claimLoading" class="hidden">
+                    <button disabled class="w-full bg-blue-500 text-white font-medium py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center space-x-2">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Processing claim...</span>
+                    </button>
+                    <p class="text-sm text-blue-600 mt-2 text-center">
+                        Please wait while we process your transaction
+                    </p>
+                </div>
+
+                <!-- Rate Limited State -->
+                <div id="claimRateLimited" class="hidden">
+                    <button disabled class="w-full bg-amber-300 text-amber-800 font-medium py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center space-x-2">
+                        <i class="fas fa-clock"></i>
+                        <span>Rate limit active</span>
+                    </button>
+                    <p class="text-sm text-amber-600 mt-2 text-center">
+                        You can claim again in <span id="rateLimitTime" class="font-medium">6 days, 14 hours</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: FaucetClaim -->
+
+        <!-- @COMPONENT: TransactionStatus -->
+        <div id="transactionStatus" class="hidden">
+            <!-- Success State -->
+            <div id="txSuccess" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 hidden">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Transaction Successful!</h3>
+                    <p class="text-gray-600 mb-4">0.001 ETH has been sent to your wallet</p>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Transaction Hash</span>
+                            <button id="copyTxBtn" class="text-blue-500 hover:text-blue-600 text-sm">
+                                <i class="fas fa-external-link-alt mr-1"></i>View on Explorer
+                            </button>
+                        </div>
+                        <p id="txHash" class="font-mono text-sm text-gray-900 break-all" data-bind="transaction.hash">0xabcd1234...5678efgh</p>
+                    </div>
+                    
+                    <button id="claimAgainBtn" class="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                        <i class="fas fa-redo mr-1"></i>Check for next claim
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="txError" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 hidden">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-times text-red-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Transaction Failed</h3>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <p class="text-red-800 text-sm" id="txErrorMessage" data-bind="transaction.errorMessage">
+                            Insufficient faucet balance or network error occurred
+                        </p>
+                    </div>
+                    <button id="retryClaimBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                        <i class="fas fa-redo mr-1"></i>Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: TransactionStatus -->
+
+        <!-- @COMPONENT: FaucetInfo -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                How it works
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Requirements</h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            MetaMask wallet connected
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            Gitcoin Passport score ≥ 10
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            Base Sepolia testnet network
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-clock text-amber-500 mr-2"></i>
+                            7-day cooldown between claims
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-3">Faucet Details</h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center justify-between">
+                            <span>Amount per claim:</span>
+                            <span class="font-medium">0.001 ETH</span>
+                        </li>
+                        <li class="flex items-center justify-between">
+                            <span>Rate limit:</span>
+                            <span class="font-medium">7 days</span>
+                        </li>
+                        <li class="flex items-center justify-between">
+                            <span>Network:</span>
+                            <span class="font-medium">Base Sepolia</span>
+                        </li>
+                        <li class="flex items-center justify-between">
+                            <span>Status:</span>
+                            <span class="text-emerald-600 font-medium">Active</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600">Need help?</span>
+                    <div class="space-x-4">
+                        <a href="#" class="text-blue-500 hover:text-blue-600">
+                            <i class="fab fa-discord mr-1"></i>Discord
+                        </a>
+                        <a href="#" class="text-blue-500 hover:text-blue-600">
+                            <i class="fab fa-github mr-1"></i>GitHub
+                        </a>
+                        <a href="#" class="text-blue-500 hover:text-blue-600">
+                            <i class="fas fa-book mr-1"></i>Docs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: FaucetInfo -->
+    </main>
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between text-sm text-gray-600">
+                <div class="flex items-center space-x-4">
+                    <span>© 2024 Base Sepolia Faucet</span>
+                    <span>•</span>
+                    <a href="#" class="hover:text-gray-900">Privacy</a>
+                    <span>•</span>
+                    <a href="#" class="hover:text-gray-900">Terms</a>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span>Powered by</span>
+                    <i class="fab fa-ethereum text-blue-500"></i>
+                    <span class="font-medium">Ethereum</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Toast notifications will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // TODO: Implement ethers.js wallet connection functionality
+        // TODO: Implement Gitcoin Passport API integration  
+        // TODO: Implement backend API calls for token claiming
+        // TODO: Implement rate limiting logic and countdown timers
+        // TODO: Implement transaction monitoring and status updates
+        
+        (function() {
+            // Mock data for demonstration
+            const mockData = {
+                walletAddress: '0x742d35Cc6C4bB6FC092Dc25c8f1D7BA65a91F7d1',
+                passportScore: 15.2,
+                isEligible: true,
+                isConnected: false,
+                lastClaimTime: null,
+                txHash: '0x4f2b2d1c3a8e9f7c1b4d6e8a9f7c1b4d6e8a9f7c1b4d6e8a9f7c1b4d6e8a9f7c'
+            };
+
+            // DOM elements
+            const elements = {
+                connectWalletBtn: document.getElementById('connectWalletBtn'),
+                connectWalletSection: document.getElementById('connectWalletSection'),
+                walletInfo: document.getElementById('walletInfo'),
+                walletAddress: document.getElementById('walletAddress'),
+                connectionStatus: document.getElementById('connectionStatus'),
+                scoreLoading: document.getElementById('scoreLoading'),
+                scoreDisplay: document.getElementById('scoreDisplay'),
+                scoreError: document.getElementById('scoreError'),
+                scoreNotConnected: document.getElementById('scoreNotConnected'),
+                passportScore: document.getElementById('passportScore'),
+                claimDisabled: document.getElementById('claimDisabled'),
+                claimEligible: document.getElementById('claimEligible'),
+                claimLoading: document.getElementById('claimLoading'),
+                claimRateLimited: document.getElementById('claimRateLimited'),
+                claimTokensBtn: document.getElementById('claimTokensBtn'),
+                transactionStatus: document.getElementById('transactionStatus'),
+                txSuccess: document.getElementById('txSuccess'),
+                txError: document.getElementById('txError'),
+                txHash: document.getElementById('txHash')
+            };
+
+            // Initialize the application
+            function init() {
+                setupEventListeners();
+                updateUI();
+            }
+
+            function setupEventListeners() {
+                elements.connectWalletBtn.addEventListener('click', handleWalletConnect);
+                if (elements.claimTokensBtn) {
+                    elements.claimTokensBtn.addEventListener('click', handleTokenClaim);
+                }
+                
+                // Copy buttons
+                const copyAddressBtn = document.getElementById('copyAddressBtn');
+                if (copyAddressBtn) {
+                    copyAddressBtn.addEventListener('click', () => copyToClipboard(mockData.walletAddress));
+                }
+            }
+
+            function handleWalletConnect() {
+                // Show loading state
+                elements.connectWalletBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Connecting...';
+                elements.connectWalletBtn.disabled = true;
+                
+                // Simulate wallet connection
+                setTimeout(() => {
+                    mockData.isConnected = true;
+                    updateUI();
+                    showToast('Wallet connected successfully!', 'success');
+                    // Simulate fetching Passport score
+                    fetchPassportScore();
+                }, 1500);
+            }
+
+            function fetchPassportScore() {
+                showElement(elements.scoreLoading);
+                hideElement(elements.scoreNotConnected);
+                
+                // Simulate API call
+                setTimeout(() => {
+                    hideElement(elements.scoreLoading);
+                    showElement(elements.scoreDisplay);
+                    elements.passportScore.textContent = mockData.passportScore;
+                    updateClaimButtonState();
+                }, 2000);
+            }
+
+            function handleTokenClaim() {
+                showElement(elements.claimLoading);
+                hideElement(elements.claimEligible);
+                
+                // Simulate backend API call
+                setTimeout(() => {
+                    hideElement(elements.claimLoading);
+                    showElement(elements.transactionStatus);
+                    showElement(elements.txSuccess);
+                    elements.txHash.textContent = mockData.txHash;
+                    showToast('Transaction successful! 0.001 ETH sent to your wallet.', 'success');
+                    
+                    // Update claim state to rate limited
+                    setTimeout(() => {
+                        hideElement(elements.txSuccess);
+                        showElement(elements.claimRateLimited);
+                    }, 5000);
+                }, 3000);
+            }
+
+            function updateUI() {
+                if (mockData.isConnected) {
+                    hideElement(elements.connectWalletSection);
+                    showElement(elements.walletInfo);
+                    showElement(elements.connectionStatus);
+                    elements.walletAddress.textContent = mockData.walletAddress;
+                } else {
+                    showElement(elements.connectWalletSection);
+                    hideElement(elements.walletInfo);
+                    hideElement(elements.connectionStatus);
+                }
+            }
+
+            function updateClaimButtonState() {
+                if (!mockData.isConnected) {
+                    showElement(elements.claimDisabled);
+                    return;
+                }
+                
+                if (mockData.isEligible && mockData.passportScore >= 10) {
+                    hideElement(elements.claimDisabled);
+                    showElement(elements.claimEligible);
+                } else {
+                    showElement(elements.claimDisabled);
+                    hideElement(elements.claimEligible);
+                }
+            }
+
+            function showElement(element) {
+                if (element) element.classList.remove('hidden');
+            }
+
+            function hideElement(element) {
+                if (element) element.classList.add('hidden');
+            }
+
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+                
+                toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 transform transition-all duration-300 translate-x-full`;
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                `;
+                
+                document.getElementById('toastContainer').appendChild(toast);
+                
+                // Slide in
+                setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+                
+                // Slide out and remove
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Address copied to clipboard!', 'success');
+                });
+            }
+
+            // Initialize when DOM is loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0052FF"/>
+  
+  <!-- Base logo circle -->
+  <circle cx="32" cy="32" r="18" fill="white"/>
+  <circle cx="32" cy="32" r="12" fill="#0052FF"/>
+  
+  <!-- Faucet water drops -->
+  <circle cx="42" cy="20" r="2" fill="#00D2FF" opacity="0.8"/>
+  <circle cx="45" cy="24" r="1.5" fill="#00D2FF" opacity="0.6"/>
+  <circle cx="39" cy="24" r="1" fill="#00D2FF" opacity="0.4"/>
+  
+  <!-- Small "F" for Faucet in corner -->
+  <text x="50" y="56" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">F</text>
+</svg>
